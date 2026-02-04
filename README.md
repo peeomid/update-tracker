@@ -1,6 +1,7 @@
 # upd (update-tracker)
 
-`upd` is a small CLI **update checker** / **release tracker**.
+`upd` is a small CLI **update checker** and **release tracker**.
+Think: “GitHub release monitor + npm update checker + brew outdated checker”, with a clean output for cron and Discord.
 
 It helps you monitor:
 - GitHub **releases** (no API key needed, uses GitHub Atom feed)
@@ -8,9 +9,9 @@ It helps you monitor:
 - **npm** package versions
 - **brew** formula versions
 
-It can also check your **local** installed version / local git clone, compare with the latest, and print a clear report (good for cron + Discord notifications).
+It can also check your **local** installed version / local git clone, compare with the latest, and print a clear report (good for cron update notifications and Discord release notifications).
 
-## Why use this?
+## Why use this? (problem it solves)
 
 If you have many “check update” scripts:
 - hard to maintain
@@ -22,6 +23,8 @@ If you have many “check update” scripts:
 - one state file
 - one output format (text / json / markdown)
 
+So you can replace many “dependency update monitor” scripts with one tool.
+
 ## Install
 
 Requirements:
@@ -32,7 +35,7 @@ Install from source (local clone):
 go install ./cmd/upd
 ```
 
-Install from GitHub (after you publish the repo):
+Install from GitHub:
 ```bash
 go install github.com/peeomid/update-tracker/cmd/upd@latest
 ```
@@ -64,7 +67,7 @@ Notes:
 - Default is **quiet**: `--only-updates=true` (prints only updates/errors).
 - Use `--only-updates=false` for “always show status” (good for daily Discord message).
 
-## Example output (Markdown)
+## Example output (Markdown for Discord)
 
 Up-to-date:
 ```md
@@ -124,19 +127,13 @@ Flags:
 - `--notes=true` (default): include highlights when `status=update`
 - `--notes=false`: disable highlights
 
-## Common keywords (for search)
+## What people use this for
 
-This tool is useful if you search for:
-- “GitHub release monitor”
-- “GitHub release notifier”
-- “GitHub release watcher”
-- “CLI update checker”
-- “release tracker cli”
-- “cron update notifications”
-- “Discord release notifications”
-- “track npm updates”
-- “brew outdated check”
-- “dependency update monitor”
+- GitHub release watcher / notifier (no API key)
+- Cron job that posts “up-to-date” or “update available” to Discord
+- Track npm updates and compare with your global install
+- Track a local git clone vs latest remote commit
+- Brew outdated checks (and a single report output)
 
 ## Limitations
 
