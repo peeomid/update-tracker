@@ -1,0 +1,22 @@
+# Example Lobster workflow: run upd and print a Discord-ready message.
+#
+# You can run locally:
+#   lobster run examples/openclaw/workflows/upd-outside-updates.yaml
+#
+# In OpenClaw/Clawdbot cron, deliver stdout to Discord.
+
+name: upd-outside-updates
+description: Outside updates via upd (always output)
+
+steps:
+  - id: upd_md
+    command: |
+      set -eu
+      export PATH="$HOME/go/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      upd check --format markdown --only-updates=false
+
+  - id: output
+    command: |
+      set -eu
+      echo "$upd_md.stdout"
+

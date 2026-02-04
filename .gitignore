@@ -1,0 +1,16 @@
+# binaries
+/upd
+*.exe
+*.dll
+*.so
+*.dylib
+
+# go build/test
+*.test
+*.out
+coverage.*
+
+# editor
+.DS_Store
+.idea/
+.vscode/

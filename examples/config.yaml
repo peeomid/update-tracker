@@ -1,0 +1,43 @@
+version: 1
+defaults:
+  timeoutSeconds: 30
+  retries: 1
+  concurrency: 6
+  userAgent: upd/1.0
+
+trackers:
+  # GitHub release + local installed version (command)
+  - name: clawdbot-release
+    label: Clawdbot
+    group: clawdbot
+    display: clawdbot
+    type: github
+    mode: release
+    repo: clawdbot/clawdbot
+    local:
+      type: command
+      command: clawdbot --version
+
+  # GitHub commit (remote) + local git clone HEAD
+  - name: lobster
+    label: Local Clone
+    group: lobster
+    display: compare
+    type: github
+    mode: commit
+    repo: openclaw/lobster
+    branch: main
+    local:
+      type: git
+      path: ~/Development/others/lobster
+
+  # npm latest (remote) + npm global installed version (local)
+  - name: lobster-npm
+    label: NPM Package
+    group: lobster
+    display: compare
+    type: npm
+    package: "@clawdbot/lobster"
+    local:
+      type: npm
+
