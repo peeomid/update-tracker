@@ -43,3 +43,35 @@ Notes:
 - Use a `lobsterPath` that points to the *executable*, not a broken symlink.
 - Output should be ONLY the content from lobster’s output array.
 
+### Suggested `lobsterPath` (stable)
+
+If your Lobster is installed via npm, the path can change with Node versions.
+A simple fix is to create a wrapper executable:
+
+```bash
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/lobster <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+exec node "$(npm root -g)/@clawdbot/lobster/bin/lobster.js" "$@"
+SH
+chmod +x ~/.local/bin/lobster
+```
+
+Then set:
+- `lobsterPath: /Users/<you>/.local/bin/lobster`
+
+### Example cron “message” body (Clawdbot cron)
+
+This is the style that works well (multiline JSON snippet):
+
+```text
+Call the lobster tool with these exact parameters:
+{
+  "action": "run",
+  "pipeline": "/path/to/openclaw/workflows/upd-outside-updates.yaml",
+  "lobsterPath": "/Users/<you>/.local/bin/lobster"
+}
+
+Then output ONLY the content from lobster's output array. Do not add any commentary.
+```
