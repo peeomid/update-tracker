@@ -41,3 +41,11 @@ trackers:
     local:
       type: npm
 
+  # GitHub pull request status (no notify per commit; only state/draft/checks changes)
+  - name: lobster-pr-123
+    label: Lobster PR #123
+    group: lobster
+    type: github
+    mode: pr
+    repo: openclaw/lobster
+    pr: 123

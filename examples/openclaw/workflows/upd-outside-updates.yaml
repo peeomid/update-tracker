@@ -12,11 +12,22 @@ steps:
   - id: upd_md
     command: |
       set -eu
-      export PATH="$HOME/go/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-      upd check --format markdown --only-updates=false
+      export PATH="$HOME/.local/bin:$HOME/go/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+      # If openclaw/clawdbot/npm installed via nvm, cron PATH won't include it.
+      # Add all nvm Node "bin" dirs (covers npm + openclaw).
+      if [ -d "$HOME/.nvm/versions/node" ]; then
+        for nvm_bin in "$HOME/.nvm/versions/node"/*/bin; do
+          if [ -d "$nvm_bin" ]; then
+            PATH="$nvm_bin:$PATH"
+          fi
+        done
+        export PATH
+      fi
+
+      upd check --config "$HOME/.config/update-tracker/config.yaml" --format markdown --only-updates=false
 
   - id: output
     command: |
       set -eu
       echo "$upd_md.stdout"
-

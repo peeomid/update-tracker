@@ -56,8 +56,15 @@ func (r Registry) Build(cfg config.TrackerEntry) (Tracker, error) {
 					Branch: branch,
 				},
 			}, nil
+		case "pr":
+			return githubPR{
+				HTTP:      r.HTTP,
+				UserAgent: r.UserAgent,
+				Repo:      cfg.Repo,
+				PR:        cfg.PR,
+			}, nil
 		default:
-			return nil, fmt.Errorf("tracker %s: github mode must be release|commit", cfg.Name)
+			return nil, fmt.Errorf("tracker %s: github mode must be release|commit|pr", cfg.Name)
 		}
 	case "brew":
 		return brewFormula{

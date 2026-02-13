@@ -32,6 +32,14 @@ trackers:
       type: git
       path: /path/to/your/lobster
 
+  # GitHub pull request status (no notify per commit; only state/draft/checks changes)
+  - name: lobster-pr-123
+    label: Lobster PR #123
+    type: github
+    mode: pr
+    repo: openclaw/lobster
+    pr: 123
+
   - name: ffmpeg
     type: brew
     formula: ffmpeg

@@ -23,6 +23,8 @@ func main() {
 		os.Exit(runValidateConfig(os.Args[2:]))
 	case "sample-config":
 		os.Exit(runSampleConfig(os.Args[2:]))
+	case "track":
+		os.Exit(runTrack(os.Args[2:]))
 	case "help":
 		os.Exit(runHelp(os.Args[2:]))
 	case "-h", "--help":
@@ -38,7 +40,7 @@ func main() {
 func usageRoot(w *os.File) {
 	fmt.Fprintln(w, "upd - update tracker")
 	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "Checks for updates (GitHub release/commit, brew, npm) and can compare with local installs/clones.")
+	fmt.Fprintln(w, "Checks for updates (GitHub release/commit/pr, brew, npm) and can compare with local installs/clones.")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Default files:")
 	fmt.Fprintf(w, "  config: %s\n", config.DefaultConfigPath())
@@ -48,6 +50,7 @@ func usageRoot(w *os.File) {
 	fmt.Fprintln(w, "  upd check [--config PATH] [--format text|json|markdown] [--only-updates=true|false]")
 	fmt.Fprintln(w, "  upd validate-config [--config PATH]")
 	fmt.Fprintln(w, "  upd sample-config")
+	fmt.Fprintln(w, "  upd track ls|add|rm [options]")
 	fmt.Fprintln(w, "  upd help [command]")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Exit codes:")
@@ -59,6 +62,7 @@ func usageRoot(w *os.File) {
 	fmt.Fprintln(w, "  upd validate-config")
 	fmt.Fprintln(w, "  upd check --format markdown --only-updates=false")
 	fmt.Fprintln(w, "  upd check --format json --notes=false")
+	fmt.Fprintln(w, "  upd track add --url https://github.com/openclaw/lobster/pull/123")
 }
 
 func rootContext() context.Context {
@@ -79,6 +83,9 @@ func runHelp(args []string) int {
 		return 0
 	case "sample-config":
 		usageSampleConfig(os.Stdout)
+		return 0
+	case "track":
+		usageTrack(os.Stdout)
 		return 0
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command for help: %s\n\n", args[0])

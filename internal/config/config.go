@@ -36,6 +36,7 @@ type TrackerEntry struct {
 	Mode   string `yaml:"mode"`
 	Repo   string `yaml:"repo"`
 	Branch string `yaml:"branch"`
+	PR     int    `yaml:"pr"`
 
 	// brew
 	Formula string `yaml:"formula"`
@@ -104,6 +105,21 @@ func Load(path string) (Config, error) {
 	return cfg, nil
 }
 
+func Save(path string, cfg Config) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("mkdir config dir: %w", err)
+	}
+	data, err := yaml.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("encode yaml: %w", err)
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return fmt.Errorf("write config: %w", err)
+	}
+	return nil
+}
+
 func (c *Config) applyDefaults() {
 	if c.Version == 0 {
 		c.Version = 1
@@ -162,68 +178,86 @@ func (c Config) Validate() error {
 			if strings.TrimSpace(t.Repo) == "" {
 				return fmt.Errorf("config: trackers[%d].repo is required (github)", i)
 			}
-			if t.Mode != "release" && t.Mode != "commit" {
-				return fmt.Errorf("config: trackers[%d].mode must be release|commit (github)", i)
+			if t.Mode != "release" && t.Mode != "commit" && t.Mode != "pr" {
+				return fmt.Errorf("config: trackers[%d].mode must be release|commit|pr (github)", i)
 			}
-				if t.Mode == "commit" && strings.TrimSpace(t.Branch) == "" {
+			if strings.TrimSpace(t.Formula) != "" || strings.TrimSpace(t.NpmPackage) != "" {
+				return fmt.Errorf("config: trackers[%d] has fields not allowed for github", i)
+			}
+
+			switch t.Mode {
+			case "commit":
+				if strings.TrimSpace(t.Branch) == "" {
 					return fmt.Errorf("config: trackers[%d].branch is required (github commit)", i)
 				}
-				if strings.TrimSpace(t.Formula) != "" || strings.TrimSpace(t.NpmPackage) != "" {
-					return fmt.Errorf("config: trackers[%d] has fields not allowed for github", i)
+				if t.PR != 0 {
+					return fmt.Errorf("config: trackers[%d].pr not allowed for github commit", i)
 				}
-
 				if strings.TrimSpace(t.Local.Type) != "" {
-					switch t.Mode {
-					case "release":
-						if t.Local.Type != "command" {
-							return fmt.Errorf("config: trackers[%d].local.type must be command (github release)", i)
-						}
-						if strings.TrimSpace(t.Local.Command) == "" {
-							return fmt.Errorf("config: trackers[%d].local.command is required (github release)", i)
-						}
-					case "commit":
-						if t.Local.Type != "git" {
-							return fmt.Errorf("config: trackers[%d].local.type must be git (github commit)", i)
-						}
-						if strings.TrimSpace(t.Local.Path) == "" {
-							return fmt.Errorf("config: trackers[%d].local.path is required (github commit)", i)
-						}
+					if t.Local.Type != "git" {
+						return fmt.Errorf("config: trackers[%d].local.type must be git (github commit)", i)
+					}
+					if strings.TrimSpace(t.Local.Path) == "" {
+						return fmt.Errorf("config: trackers[%d].local.path is required (github commit)", i)
 					}
 				}
-			case "brew":
-				if strings.TrimSpace(t.Formula) == "" {
-					return fmt.Errorf("config: trackers[%d].formula is required (brew)", i)
+			case "release":
+				if t.PR != 0 {
+					return fmt.Errorf("config: trackers[%d].pr not allowed for github release", i)
 				}
+				if strings.TrimSpace(t.Local.Type) != "" {
+					if t.Local.Type != "command" {
+						return fmt.Errorf("config: trackers[%d].local.type must be command (github release)", i)
+					}
+					if strings.TrimSpace(t.Local.Command) == "" {
+						return fmt.Errorf("config: trackers[%d].local.command is required (github release)", i)
+					}
+				}
+			case "pr":
+				if t.PR <= 0 {
+					return fmt.Errorf("config: trackers[%d].pr is required and must be > 0 (github pr)", i)
+				}
+				if strings.TrimSpace(t.Branch) != "" {
+					return fmt.Errorf("config: trackers[%d].branch not allowed for github pr", i)
+				}
+				if strings.TrimSpace(t.Local.Type) != "" {
+					return fmt.Errorf("config: trackers[%d].local not supported for github pr", i)
+				}
+			}
+		case "brew":
+			if strings.TrimSpace(t.Formula) == "" {
+				return fmt.Errorf("config: trackers[%d].formula is required (brew)", i)
+			}
 			if strings.TrimSpace(t.Mode) != "" {
 				return fmt.Errorf("config: trackers[%d].mode not allowed for type brew", i)
 			}
-				if strings.TrimSpace(t.Repo) != "" || strings.TrimSpace(t.Branch) != "" || strings.TrimSpace(t.NpmPackage) != "" {
-					return fmt.Errorf("config: trackers[%d] has fields not allowed for brew", i)
-				}
-				if strings.TrimSpace(t.Local.Type) != "" {
-					return fmt.Errorf("config: trackers[%d].local not supported for brew", i)
-				}
-			case "npm":
-				if strings.TrimSpace(t.NpmPackage) == "" {
-					return fmt.Errorf("config: trackers[%d].package is required (npm)", i)
-				}
+			if strings.TrimSpace(t.Repo) != "" || strings.TrimSpace(t.Branch) != "" || strings.TrimSpace(t.NpmPackage) != "" || t.PR != 0 {
+				return fmt.Errorf("config: trackers[%d] has fields not allowed for brew", i)
+			}
+			if strings.TrimSpace(t.Local.Type) != "" {
+				return fmt.Errorf("config: trackers[%d].local not supported for brew", i)
+			}
+		case "npm":
+			if strings.TrimSpace(t.NpmPackage) == "" {
+				return fmt.Errorf("config: trackers[%d].package is required (npm)", i)
+			}
 			if strings.TrimSpace(t.Mode) != "" {
 				return fmt.Errorf("config: trackers[%d].mode not allowed for type npm", i)
 			}
-				if strings.TrimSpace(t.Repo) != "" || strings.TrimSpace(t.Branch) != "" || strings.TrimSpace(t.Formula) != "" {
-					return fmt.Errorf("config: trackers[%d] has fields not allowed for npm", i)
-				}
-				if strings.TrimSpace(t.Local.Type) != "" {
-					if t.Local.Type != "npm" {
-						return fmt.Errorf("config: trackers[%d].local.type must be npm (npm)", i)
-					}
-					if strings.TrimSpace(t.Local.Package) != "" && strings.TrimSpace(t.Local.Package) != strings.TrimSpace(t.NpmPackage) {
-						// allowed, but must be explicit and non-empty; keep it validated (no extra rule)
-					}
-				}
-			default:
-				return fmt.Errorf("config: trackers[%d].type must be github|brew|npm", i)
+			if strings.TrimSpace(t.Repo) != "" || strings.TrimSpace(t.Branch) != "" || strings.TrimSpace(t.Formula) != "" || t.PR != 0 {
+				return fmt.Errorf("config: trackers[%d] has fields not allowed for npm", i)
 			}
+			if strings.TrimSpace(t.Local.Type) != "" {
+				if t.Local.Type != "npm" {
+					return fmt.Errorf("config: trackers[%d].local.type must be npm (npm)", i)
+				}
+				if strings.TrimSpace(t.Local.Package) != "" && strings.TrimSpace(t.Local.Package) != strings.TrimSpace(t.NpmPackage) {
+					// allowed, but must be explicit and non-empty; keep it validated (no extra rule)
+				}
+			}
+		default:
+			return fmt.Errorf("config: trackers[%d].type must be github|brew|npm", i)
+		}
 
 		// validate local fields (no extra keys)
 		if strings.TrimSpace(t.Local.Type) != "" {

@@ -6,6 +6,7 @@ Think: “GitHub release monitor + npm update checker + brew outdated checker”
 It helps you monitor:
 - GitHub **releases** (no API key needed, uses GitHub Atom feed)
 - GitHub **commits** (uses `git ls-remote`)
+- GitHub **pull requests** (PR status + checks)
 - **npm** package versions
 - **brew** formula versions
 
@@ -98,12 +99,22 @@ Latest:  2026.2.2
 See `examples/config.yaml`.
 
 Key ideas:
-- `type: github` + `mode: release|commit`
+- `type: github` + `mode: release|commit|pr`
+- `type: github` + `mode: pr` + `pr: 123` (PR status)
 - `local:` tells `upd` how to read your local version:
   - `command`: run a command and extract version
   - `git`: read local repo HEAD
   - `npm`: read global installed package version
 - `label/group/display` controls nicer Markdown output.
+
+## Quick tracker management (no YAML editing)
+
+Add/remove trackers:
+```bash
+upd track ls
+upd track add --url https://github.com/openclaw/lobster/pull/123
+upd track rm lobster-pr-123
+```
 
 ## Lobster workflow example (Discord)
 

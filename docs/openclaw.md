@@ -20,6 +20,11 @@ Start from:
 - `upd sample-config`
 - or copy `examples/config.yaml`
 
+Tip: you can also add trackers without editing YAML:
+```bash
+upd track add --url https://github.com/openclaw/lobster/pull/123
+```
+
 Validate:
 ```bash
 upd validate-config

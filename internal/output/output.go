@@ -163,11 +163,19 @@ func renderDiscordItem(it app.ReportItem) string {
 		label = it.Name
 	}
 
-	switch strings.TrimSpace(it.Display) {
+	// Auto-detect PR mode even without explicit display field.
+	display := strings.TrimSpace(it.Display)
+	if display == "" && it.Mode == "pr" {
+		display = "pr"
+	}
+
+	switch display {
 	case "clawdbot":
 		return renderClawdbot(it, label)
 	case "compare":
 		return renderCompare(it, label)
+	case "pr":
+		return renderPR(it, label)
 	default:
 		// fallback: one line
 		msg := it.Message
@@ -267,6 +275,35 @@ func renderCompare(it app.ReportItem, label string) string {
 		return fmt.Sprintf("%s: ⚠️ %s (latest: %s)", label, local, latest)
 	}
 	return fmt.Sprintf("%s: ⚠️ unknown", label)
+}
+
+func renderPR(it app.ReportItem, label string) string {
+	msg := it.Message
+	if it.Status == "error" && strings.TrimSpace(it.Error) != "" {
+		msg = it.Error
+	}
+
+	// Pick emoji based on state in the current seen value.
+	current := strings.ToLower(it.Current)
+	emoji := "🔵"
+	if strings.HasPrefix(current, "merged") {
+		emoji = "🟣"
+	} else if strings.HasPrefix(current, "closed") {
+		emoji = "⚫"
+	} else if strings.Contains(current, "checks=failure") {
+		emoji = "🔴"
+	} else if strings.Contains(current, "checks=pending") {
+		emoji = "🟡"
+	} else if strings.Contains(current, "checks=success") {
+		emoji = "🟢"
+	}
+
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("%s **%s** — %s", emoji, label, msg))
+	if it.Links != nil && strings.TrimSpace(it.Links["pr"]) != "" {
+		b.WriteString(fmt.Sprintf("\n  🔗 %s", it.Links["pr"]))
+	}
+	return b.String()
 }
 
 func short7(s string) string {
